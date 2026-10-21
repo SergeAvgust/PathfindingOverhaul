@@ -1,0 +1,6 @@
+{
+  "displayName": "Pathfinding Fix",
+  "description": "Replaces the game's greedy jump-route search with an exact shortest-path search (fastest route by the game's own travel time, fewer jumps, no false 'no path' answers) and answers the bulk travel-time queries of the AI from cached shortest-path trees. Galaxy generation and AI turns spend far less time on pathfinding.",
+  "version": "0.1.0",
+  "bundles": []
+}

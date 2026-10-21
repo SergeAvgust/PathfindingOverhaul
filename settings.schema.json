@@ -1,0 +1,78 @@
+{
+  "fields": [
+    {
+      "key": "HopPenaltyPercent",
+      "type": "float",
+      "label": "Cost of each jump (% of jump range)",
+      "description": "Added to every jump when choosing a route, so that of two routes with almost the same travel time the one with fewer jumps wins. 0 picks the pure fastest route; 10 keeps the number of jumps close to what the game used to choose.",
+      "min": 0,
+      "max": 50,
+      "default": 10
+    },
+    {
+      "key": "RoutePointOrders",
+      "type": "bool",
+      "label": "Route orders to a point in space through the jump network",
+      "description": "A move order whose target is a point in space (a click that misses the star by a little) is given no jump route by the game, so the ship flies straight at the point. With this on, such an order is routed to the nearest system location first, like the game already does for orders given by coordinates.",
+      "default": true
+    }
+  ],
+  "Developer": [
+    {
+      "key": "Mode",
+      "type": "enum",
+      "label": "Mode",
+      "description": "replace: the new search answers; compare: the game's own search answers and the new one is run beside it and timed (report in the log); off: nothing is patched.",
+      "options": ["replace", "compare", "off"],
+      "default": "replace",
+      "hidden": true
+    },
+    {
+      "key": "LogEnabled",
+      "type": "bool",
+      "label": "Log statistics",
+      "description": "Writes a summary of the calls, cache hits, tree builds and time spent to PathfindingFix.log every minute. Small cost; leave off for normal play.",
+      "default": false,
+      "hidden": true
+    },
+    {
+      "key": "LogCacheChanges",
+      "type": "bool",
+      "label": "Log neighbour-list changes",
+      "description": "Logs each real change of a system's neighbour list (what changed and which game method caused it) and each cached tree that had to be rebuilt because of it.",
+      "default": false,
+      "hidden": true
+    },
+    {
+      "key": "LogPathTrace",
+      "type": "bool",
+      "label": "Path trace on request",
+      "description": "Keeps the last 1000 FindPath calls in memory (systems, route, totals, calling game method). Creating a file named trace.now next to the mod's DLL writes the calls of the last 2 minutes (up to 600) to the log, so an order can be given first and the trace taken right after it.",
+      "default": false,
+      "hidden": true
+    },
+    {
+      "key": "CacheBudgetMb",
+      "type": "int",
+      "label": "Tree cache size (MB)",
+      "description": "Memory for cached shortest-path trees. About 24 KB per tree at 2000 systems.",
+      "min": 4,
+      "max": 1024,
+      "default": 64,
+      "hidden": true
+    },
+    {
+      "key": "CompareReportSeconds",
+      "type": "int",
+      "label": "Compare report interval (s)",
+      "description": "In compare mode: write the comparison report to the log every this many seconds (0: only when a file named report.now is created next to the mod's DLL).",
+      "min": 0,
+      "max": 3600,
+      "default": 0,
+      "hidden": true
+    }
+  ],
+  "_groups": {
+    "Developer": "Diagnostics for the mod's author. They have no effect on how the game plays in replace mode."
+  }
+}
