@@ -15,6 +15,13 @@
       "label": "Route orders to a point in space through the jump network",
       "description": "A move order whose target is a point in space (a click that misses the star by a little) is given no jump route by the game, so the ship flies straight at the point. With this on, such an order is routed to the nearest system location first, like the game already does for orders given by coordinates.",
       "default": true
+    },
+    {
+      "key": "RouteFromShipPosition",
+      "type": "bool",
+      "label": "Route ships in open space from where they are",
+      "description": "A ship between systems is routed as if it started at the nearest system, which is often behind it, so it first flies back and then onward. With this on, its first jump can go straight to any system within its jump range, and the cheapest route from there wins.",
+      "default": true
     }
   ],
   "Developer": [

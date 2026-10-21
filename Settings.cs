@@ -9,6 +9,7 @@ internal sealed class Settings
 
     public float HopPenaltyPercent = 10f;
     public bool RoutePointOrders = true;
+    public bool RouteFromShipPosition = true;
     public string Mode = ModeReplace;
     public bool LogEnabled;
     public bool LogCacheChanges;
@@ -43,6 +44,7 @@ internal sealed class Settings
                     }
                 }
                 s.RoutePointOrders = Flag(root, "RoutePointOrders", true);
+                s.RouteFromShipPosition = Flag(root, "RouteFromShipPosition", true);
                 s.LogEnabled = Flag(root, "LogEnabled", false);
                 s.LogCacheChanges = Flag(root, "LogCacheChanges", false);
                 s.LogPathTrace = Flag(root, "LogPathTrace", false);

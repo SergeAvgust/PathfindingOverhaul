@@ -108,7 +108,8 @@ internal static class Replacement
             directDistance = direct.Distance;
         }
 
-        float penalty = Settings.Current.HopPenaltyFraction;
+        Settings settings = Settings.Current;
+        float penalty = settings.HopPenaltyFraction;
         int[] path;
         Tree? tree = TreeCache.TryGet(view.Token, BitConverter.SingleToInt32Bits(jumpRange), from, penalty);
         if (tree != null)
@@ -121,6 +122,19 @@ internal static class Replacement
         {
             outcome = Outcome.AStar;
             path = PathEngine.FindPath(view, from, to, jumpRange, penalty);
+        }
+
+        // A ship in open space is not at its source system: that is only the nearest location's system, often behind the ship. Search from the ship's own position instead, so that its first jump
+        // can go straight to any system within range (the game's trimming of the start only reaches systems within 62.5M of the ship, hence the backtracking of vanilla routes).
+        // The direct-link rule below compares routes that start at the source system, which is not fair to a route from the ship, so it is dropped then.
+        if (sourceDeepSpacePoint != Point.Zero && settings.RouteFromShipPosition)
+        {
+            int[] fromShip = PathEngine.FindPathFromPoint(view, galaxy, sourceDeepSpacePoint.X, sourceDeepSpacePoint.Y, to, jumpRange, penalty);
+            if (fromShip.Length > 0)
+            {
+                path = fromShip;
+                directTime = 0;
+            }
         }
 
         if (path.Length == 0)

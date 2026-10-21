@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using DistantWorlds.Types;
+using Stride.Core.Mathematics;
 
 namespace PathfindingFix;
 
@@ -108,7 +109,7 @@ internal static class PathEngine
     }
 
     // Search from `from`; with `to` >= 0 it stops when `to` is settled (A* if `astar`, else Dijkstra), with -1 it settles everything reachable.
-    private static void Run(GalaxyView view, Scratch s, int from, int to, float range, float penalty, bool astar)
+    private static void Run(GalaxyView view, Scratch s, int from, int to, float range, float penalty, bool astar, (int Node, float Cost)[]? seeds = null)
     {
         float tx = to >= 0 ? view.X[to] : 0, ty = to >= 0 ? view.Y[to] : 0;
         float Estimate(int v)
@@ -121,11 +122,30 @@ internal static class PathEngine
             return MathF.Sqrt(dx * dx + dy * dy);
         }
 
-        s.Seen[from] = s.Stamp;
-        s.Cost[from] = 0;
-        s.Pure[from] = 0;
-        s.Prev[from] = -1;
-        Push(s, from, to >= 0 ? Estimate(from) : 0);
+        if (seeds != null)
+        {
+            // several starting systems, each with its own cost to get there (a ship in open space: the cost of its first jump)
+            foreach ((int node, float cost) in seeds)
+            {
+                if (s.Seen[node] == s.Stamp && s.Cost[node] <= cost)
+                {
+                    continue;
+                }
+                s.Seen[node] = s.Stamp;
+                s.Cost[node] = cost;
+                s.Pure[node] = 0;
+                s.Prev[node] = -1;
+                Push(s, node, to >= 0 ? cost + Estimate(node) : cost);
+            }
+        }
+        else
+        {
+            s.Seen[from] = s.Stamp;
+            s.Cost[from] = 0;
+            s.Pure[from] = 0;
+            s.Prev[from] = -1;
+            Push(s, from, to >= 0 ? Estimate(from) : 0);
+        }
         while (s.HeapCount > 0)
         {
             int u = Pop(s);
@@ -238,6 +258,45 @@ internal static class PathEngine
         Stats.Add(ref Stats.AStarSearches);
         Scratch s = Begin(view.Size);
         Run(view, s, from, to, range, penaltyFraction * range, facts.TimeAtLeastDistance);
+        if (s.Seen[to] != s.Stamp)
+        {
+            return Array.Empty<int>();
+        }
+        var steps = new List<int>(16);
+        for (int v = to; v != -1; v = s.Prev[v])
+        {
+            steps.Add(v);
+        }
+        steps.Reverse();
+        return steps.ToArray();
+    }
+
+    // System ids from a ship's position in open space to `to`: the ship may start its first jump to any system within the jump range of where it is,
+    // at the cost of that straight line (the game's own CalculateLineCost, so nebulae count), and the cheapest route from there on wins. Empty when no system within range leads to `to`.
+    // Not cached: it belongs to one position.
+    public static int[] FindPathFromPoint(GalaxyView view, Galaxy galaxy, float x, float y, int to, float range, float penaltyFraction)
+    {
+        GraphFacts facts = Facts(view, range);
+        float penalty = penaltyFraction * range;
+        double rangeSquared = (double)range * range;
+        var seeds = new List<(int Node, float Cost)>();
+        var start = new Vector2(x, y);
+        foreach (int id in view.Ids)
+        {
+            double dx = view.X[id] - x, dy = view.Y[id] - y;
+            if (dx * dx + dy * dy > rangeSquared || facts.Component[id] != facts.Component[to])
+            {
+                continue;
+            }
+            seeds.Add((id, PathFindingSystem.CalculateLineCost(start, new Vector2(view.X[id], view.Y[id]), galaxy) + penalty));
+        }
+        if (seeds.Count == 0)
+        {
+            return Array.Empty<int>();
+        }
+        Stats.Add(ref Stats.AStarSearches);
+        Scratch s = Begin(view.Size);
+        Run(view, s, -1, to, range, penalty, facts.TimeAtLeastDistance, seeds.ToArray());
         if (s.Seen[to] != s.Stamp)
         {
             return Array.Empty<int>();
